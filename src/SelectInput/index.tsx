@@ -211,6 +211,18 @@ export default React.forwardRef<SelectInputRef, SelectInputProps>(function Selec
     onMouseDown?.(event);
   });
 
+  // ===================== Clear ======================
+  // The clear button lives inside the select root, whose `onKeyDown` treats
+  // Enter/Space as "open the dropdown" and calls `preventDefault` on them.
+  // That would cancel the native button activation, so keyboard users would
+  // never get the `click` event which performs the clear. Keep the activation
+  // keys scoped to the button itself.
+  const onClearKeyDown: React.KeyboardEventHandler<HTMLButtonElement> = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.stopPropagation();
+    }
+  };
+
   // =================== Components ===================
   const { root: RootComponent } = components;
 
@@ -298,6 +310,7 @@ export default React.forwardRef<SelectInputRef, SelectInputProps>(function Selec
               e.preventDefault();
               (e.nativeEvent as any)._select_lazy = true;
             }}
+            onKeyDown={onClearKeyDown}
             // Clearing happens on click so it works for both pointer and
             // keyboard (Enter/Space) activation.
             onClick={onClearMouseDown}

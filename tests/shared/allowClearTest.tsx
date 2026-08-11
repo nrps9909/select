@@ -23,6 +23,7 @@ export default function allowClearTest(mode: any, value: any) {
       fireEvent(clear, mouseDownEvent);
       expect(mouseDownEvent.defaultPrevented).toBe(true);
     });
+
     it('clears value', () => {
       const onClear = jest.fn();
       const onChange = jest.fn();
@@ -61,6 +62,48 @@ export default function allowClearTest(mode: any, value: any) {
       expect(onDeselect).not.toBeCalled();
       expect(container.querySelector('input').value).toEqual('');
       expect(onClear).toHaveBeenCalled();
+    });
+
+    it('clears value with keyboard', () => {
+      ['Enter', ' '].forEach((key) => {
+        const onClear = jest.fn();
+        const onChange = jest.fn();
+        const onDeselect = jest.fn();
+        const useArrayValue = ['tags', 'multiple'].includes(mode);
+
+        const { container } = render(
+          <Select
+            defaultValue={useArrayValue ? ['1'] : '1'}
+            mode={mode}
+            allowClear
+            onClear={onClear}
+            onChange={onChange}
+            onDeselect={onDeselect}
+          >
+            <Option value="1">1</Option>
+            <Option value="2">2</Option>
+          </Select>,
+        );
+        const clear = container.querySelector('.rc-select-clear');
+        const keyDownEvent = createEvent.keyDown(clear, { key });
+
+        fireEvent(clear, keyDownEvent);
+
+        expect(keyDownEvent.defaultPrevented).toBe(false);
+        expect(container.querySelector('.rc-select-open')).toBeFalsy();
+
+        // The native button activation should fire a click
+        fireEvent.click(clear);
+
+        if (useArrayValue) {
+          expect(onChange).toHaveBeenCalledWith([], []);
+        } else {
+          expect(onChange).toHaveBeenCalledWith(undefined, undefined);
+        }
+        expect(onDeselect).not.toBeCalled();
+        expect(container.querySelector('input').value).toEqual('');
+        expect(onClear).toHaveBeenCalled();
+      });
     });
   });
 }
