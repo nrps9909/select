@@ -257,6 +257,29 @@ const OptionList: React.ForwardRefRenderFunction<RefOptionListProps, {}> = (_, r
     },
   }));
 
+  // `optionPositions`: skip group headers to match native <select> announcements with <optgroup>
+  // `itemGroups`: owning group header of each option, so lookups stay O(1) while rendering
+  const [optionPositions, itemGroups] = React.useMemo(() => {
+    let count = 0;
+    let group: FlattenOptionData<BaseOptionType> | null = null;
+
+    const positions: number[] = [];
+    const groups: (FlattenOptionData<BaseOptionType> | null)[] = [];
+
+    memoFlattenOptions.forEach((item) => {
+      if (item.group) {
+        group = item;
+        positions.push(count);
+        groups.push(null);
+      } else {
+        positions.push((count += 1));
+        groups.push(item.groupOption ? group : null);
+      }
+    });
+
+    return [positions, groups] as const;
+  }, [memoFlattenOptions]);
+
   // ========================== Render ==========================
   if (memoFlattenOptions.length === 0) {
     return (
@@ -291,12 +314,13 @@ const OptionList: React.ForwardRefRenderFunction<RefOptionListProps, {}> = (_, r
     }
     const itemData = item.data || {};
     const { value, disabled } = itemData;
-    const { group } = item;
     const attrs = pickAttrs(itemData, true);
     const mergedLabel = getLabel(item);
-    return item ? (
+    return (
       <div
-        aria-label={typeof mergedLabel === 'string' && !group ? mergedLabel : null}
+        aria-label={isTitleType(mergedLabel) ? String(mergedLabel) : null}
+        aria-setsize={optionPositions[optionPositions.length - 1] ?? 0}
+        aria-posinset={optionPositions[index]}
         {...attrs}
         key={index}
         {...getItemAriaProps(item, index)}
@@ -305,7 +329,48 @@ const OptionList: React.ForwardRefRenderFunction<RefOptionListProps, {}> = (_, r
       >
         {value}
       </div>
-    ) : null;
+    );
+  };
+
+  // Nest options inside `role="group"` wrappers
+  const renderHiddenItems = () => {
+    const segments: {
+      group: FlattenOptionData<BaseOptionType> | null;
+      indexes: number[];
+    }[] = [];
+
+    [activeIndex - 1, activeIndex, activeIndex + 1].forEach((index) => {
+      const item = memoFlattenOptions[index];
+      if (!item || item.group) {
+        return;
+      }
+
+      const groupItem = itemGroups[index];
+      const lastSegment = segments[segments.length - 1];
+
+      if (lastSegment && lastSegment.group === groupItem) {
+        lastSegment.indexes.push(index);
+      } else {
+        segments.push({ group: groupItem, indexes: [index] });
+      }
+    });
+
+    return segments.map(({ group, indexes }) => {
+      if (!group) {
+        return indexes.map(renderItem);
+      }
+
+      const groupLabel = getLabel(group);
+      return (
+        <div
+          key={group.key}
+          role="group"
+          aria-label={group.data.title ?? (isTitleType(groupLabel) ? String(groupLabel) : null)}
+        >
+          {indexes.map(renderItem)}
+        </div>
+      );
+    });
   };
 
   const a11yProps = {
@@ -317,9 +382,7 @@ const OptionList: React.ForwardRefRenderFunction<RefOptionListProps, {}> = (_, r
     <>
       {virtual && (
         <div {...a11yProps} style={{ height: 0, width: 0, overflow: 'hidden' }}>
-          {renderItem(activeIndex - 1)}
-          {renderItem(activeIndex)}
-          {renderItem(activeIndex + 1)}
+          {renderHiddenItems()}
         </div>
       )}
       <List<FlattenOptionData<BaseOptionType>>
