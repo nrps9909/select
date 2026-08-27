@@ -1424,7 +1424,7 @@ describe('Select.Basic', () => {
     expect(container.querySelector('.rc-select-item-empty').textContent).toEqual('Not Found');
   });
 
-  it('uses text input type and disables browser autocomplete for search', () => {
+  it('uses text input type with autocomplete suppression by default', () => {
     const { container } = render(
       <Select showSearch open>
         <Option value="1">1</Option>
@@ -1434,6 +1434,17 @@ describe('Select.Basic', () => {
     const input = container.querySelector('input');
     expect(input.getAttribute('type')).toBe('text');
     expect(input.getAttribute('autocomplete')).toBe('new-password');
+  });
+
+  it('forwards autocomplete to the search input', () => {
+    const { container } = render(
+      <Select showSearch open autoComplete="off">
+        <Option value="1">1</Option>
+      </Select>,
+    );
+
+    expect(container.querySelector('input')).toHaveAttribute('autocomplete', 'off');
+    expect(container.querySelector('.rc-select')).not.toHaveAttribute('autocomplete');
   });
 
   it('warns on invalid children', () => {

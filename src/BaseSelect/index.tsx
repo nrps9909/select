@@ -144,6 +144,7 @@ export interface BaseSelectProps
   tagRender?: (props: CustomTagProps) => React.ReactElement;
   direction?: 'ltr' | 'rtl';
   autoFocus?: boolean;
+  autoComplete?: string;
   placeholder?: React.ReactNode;
   maxCount?: number;
 

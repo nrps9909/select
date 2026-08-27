@@ -37,6 +37,7 @@ export interface SelectInputProps extends Omit<React.HTMLAttributes<HTMLDivEleme
   onSelectorRemove?: (value: DisplayValueType) => void;
   maxLength?: number;
   autoFocus?: boolean;
+  autoComplete?: string;
   /** Check if tokenization should treat pasted line breaks as separators */
   tokenWithEnter?: boolean;
   // Add other props that need to be passed through
@@ -60,6 +61,7 @@ const DEFAULT_OMIT_PROPS = [
   'onPopupScroll',
   'tabIndex',
   'activeValue',
+  'autoComplete',
   'onSelectorRemove',
   'focused',
 ] as const;
