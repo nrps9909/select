@@ -109,10 +109,14 @@ type ArrayElementType<T> = T extends (infer E)[] ? E : T;
 
 export type SemanticName = BaseSelectSemanticName;
 export type PopupSemantic = 'listItem' | 'list';
+export interface SearchInfo {
+  /** Whether the search text is part of an active input method composition. */
+  isComposing: boolean;
+}
 export interface SearchConfig<OptionType> {
   searchValue?: string;
   autoClearSearchValue?: boolean;
-  onSearch?: (value: string) => void;
+  onSearch?: (value: string, info?: SearchInfo) => void;
   filterOption?: boolean | FilterFunc<OptionType>;
   filterSort?: (optionA: OptionType, optionB: OptionType, info: { searchValue: string }) => number;
   optionFilterProp?: string | string[];
@@ -649,11 +653,15 @@ const Select = React.forwardRef<BaseSelectRef, SelectProps<any, DefaultOptionTyp
       }
 
       if (info.source !== 'blur') {
-        if (mode === 'combobox') {
+        if (mode === 'combobox' && !info.isCompositionEnd) {
           triggerChange(searchText);
         }
 
-        onSearch?.(searchText);
+        if (typeof info.isComposing === 'boolean') {
+          onSearch?.(searchText, { isComposing: info.isComposing });
+        } else {
+          onSearch?.(searchText);
+        }
       }
     };
 
