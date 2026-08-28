@@ -653,7 +653,7 @@ const Select = React.forwardRef<BaseSelectRef, SelectProps<any, DefaultOptionTyp
       }
 
       if (info.source !== 'blur') {
-        if (mode === 'combobox' && !info.isCompositionEnd) {
+        if (mode === 'combobox') {
           triggerChange(searchText);
         }
 

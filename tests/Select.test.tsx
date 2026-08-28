@@ -798,6 +798,24 @@ describe('Select.Basic', () => {
     expect(handleChange).toHaveBeenCalledTimes(1);
   });
 
+  it('commits combobox composition text when compositionend is the first value event', () => {
+    const handleSearch = jest.fn();
+    const handleChange = jest.fn();
+    const { container } = render(
+      <Select mode="combobox" onSearch={handleSearch} onChange={handleChange} />,
+    );
+    const input = container.querySelector('input');
+
+    fireEvent.compositionStart(input);
+    input.value = '中文';
+    fireEvent.compositionEnd(input);
+
+    expect(handleSearch).toHaveBeenCalledTimes(1);
+    expect(handleSearch).toHaveBeenCalledWith('中文', { isComposing: false });
+    expect(handleChange).toHaveBeenCalledTimes(1);
+    expect(handleChange).toHaveBeenCalledWith('中文', {});
+  });
+
   it('not fires search event when user select', () => {
     const handleSearch = jest.fn();
     const { container } = render(
